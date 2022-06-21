@@ -1,13 +1,14 @@
 // packages needed for this application
-// var inquirer = require('inquirer');
 require('console.table');
 const mysql = require('mysql2');
 const {
     prompt
 } = require('inquirer');
-const {
-    resolveSoa
-} = require('dns');
+
+// creating arrays for departments and roles
+const departments = [];
+const roles = [];
+
 
 // Connect to database
 const db = mysql.createConnection({
@@ -22,30 +23,58 @@ const db = mysql.createConnection({
 );
 
 
-// db.query()
-
 // need 7 functions
 //  view all departments, view all roles, view all employeess
 // create a department, create a role, create an employee
 // update an employee role
 
+// puts existing departments into the departments array
+db.query("SELECT name FROM department", function(err,res){
+    if (err) throw err;
 
-// TODO: Create an array of questions for user input
+    res.forEach(department => {
+        departments.push(department.name);
+    });
+});
+
+// puts existing roles into the roles array
+db.query("SELECT title FROM role", function(err,res){
+    if (err) throw err;
+    
+    res.forEach(role => {
+        roles.push(role.title);
+    });
+});
+
+
+
+// create an array of questions for user input
 function questions() {
     // inquirer
     prompt([{
         type: 'list',
         message: 'What would you like to do',
-        choices: ["View All Departments", "View All Roles", "View All Employees", "Create A Department", "Create A Role", "Create An Employee", "Update An Employee Role"],
+        choices: ["View All Departments", "View All Roles", "View All Employees", "Add A Department", "Add A Role", "Add An Employee", "Update An Employee Role"],
         name: 'viewAll',
     }]).then((data) => {
         if (data.viewAll === 'View All Departments') {
             viewDepartments();
         } else if (data.viewAll === 'View All Roles') {
             viewRoles();
-        } else {
-            (data.viewAll === 'View All Employees')
+        } else if (data.viewAll === 'View All Employees') {
             viewEmployees();
+        } else if (data.viewAll === "Add A Department") {
+            addDepartment();
+        } else if (data.viewAll === "Add A Role") {
+            addRole();
+        } else if (data.viewAll === "Add An Employee") {
+
+        } else if (data.viewAll === "Update An Employee Role") {
+
+
+        } else if (data.viewAll === "Exit") {
+            console.log("Exiting")
+            db.end();
         }
 
     })
@@ -58,6 +87,7 @@ function viewDepartments() {
             throw err
         } else {
             console.table(res)
+            questions();
         }
     })
 };
@@ -68,7 +98,9 @@ function viewRoles() {
             throw err
         } else {
             console.table(res)
+            questions();
         }
+      
     })
 };
 
@@ -78,9 +110,73 @@ function viewEmployees() {
             throw err
         } else {
             console.table(res)
+            questions();
         }
     })
 };
+
+function addDepartment() {
+    prompt([{
+        type: "input",
+        message: "What is the name of the department",
+        name: "department"
+    }]).then(({
+        department
+    }) => {
+        db.query('INSERT INTO department SET ?', {
+                name: department
+            },
+            function (err) {
+                if (err) throw err;
+                console.log(`The department "${department}" has been added.`);
+                departments.push(department);
+
+                questions();
+            }
+        );
+    });
+}
+
+
+function addRole() {
+    prompt([{
+        type: "input",
+        message: "What is the title for this role?",
+        name: "title"
+    }, {
+        type: "number",
+        message: "What is the salary for this role?",
+        name: "salary"
+    }, {
+        type: "list",
+        message: "What department is this role a part of?",
+        choices: departments,
+        name: "department"
+    }]).then(role => {
+        db.query(`SELECT id FROM department WHERE (department.name= "${role.department}")`, function (err, res) {
+            if (err) throw err;
+
+            db.query("INSERT INTO role SET ?", {
+                    title: role.title,
+                    salary: role.salary,
+                    department_id: res[0].id
+                },
+                function (err) {
+                    if (err) throw err;
+                    console.log(`The role "${role.title}" has been added to the department of "${role.department}" with a salary of "${role.salary}"`);
+
+                    roles.push(role.title);
+
+                    questions();
+                });
+           
+        });
+    });
+}
+
+
+
+
 
 
 questions();
