@@ -29,7 +29,7 @@ const db = mysql.createConnection({
 // update an employee role
 
 // puts existing departments into the departments array
-db.query("SELECT name FROM department", function(err,res){
+db.query("SELECT name FROM department", function (err, res) {
     if (err) throw err;
 
     res.forEach(department => {
@@ -38,9 +38,9 @@ db.query("SELECT name FROM department", function(err,res){
 });
 
 // puts existing roles into the roles array
-db.query("SELECT title FROM role", function(err,res){
+db.query("SELECT title FROM role", function (err, res) {
     if (err) throw err;
-    
+
     res.forEach(role => {
         roles.push(role.title);
     });
@@ -68,10 +68,9 @@ function questions() {
         } else if (data.viewAll === "Add A Role") {
             addRole();
         } else if (data.viewAll === "Add An Employee") {
-
+            addEmployee();
         } else if (data.viewAll === "Update An Employee Role") {
-
-
+            updateEmployee();
         } else if (data.viewAll === "Exit") {
             console.log("Exiting")
             db.end();
@@ -81,8 +80,9 @@ function questions() {
 
 };
 
+// function is called when VIEW DEPARTMENT is chosen
 function viewDepartments() {
-    db.query('SELECT * FROM department', (err, res) => {
+    db.query('SELECT department.id AS Department_ID, department.name AS Department_Name FROM department', (err, res) => {
         if (err) {
             throw err
         } else {
@@ -92,20 +92,22 @@ function viewDepartments() {
     })
 };
 
+// function is called when VIEW ROLES is chosen
 function viewRoles() {
-    db.query('SELECT * FROM role', (err, res) => {
+    db.query('SELECT role.id AS Role_ID, role.title AS Role_Title, role.salary AS Salary, department.name AS Department_Name FROM role JOIN department ON role.department_id = department.id', (err, res) => {
         if (err) {
             throw err
         } else {
             console.table(res)
             questions();
         }
-      
+
     })
 };
 
+// function is called when VIEW EMPLOYEES is chosen
 function viewEmployees() {
-    db.query('SELECT * FROM employee', (err, res) => {
+    db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS department, CONCAT(e2.first_name, ' ', e2.last_name) AS manager FROM employee LEFT JOIN employee as e2 ON e2.id = employee.manager_id JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id;`, (err, res) => {
         if (err) {
             throw err
         } else {
@@ -115,6 +117,8 @@ function viewEmployees() {
     })
 };
 
+
+// function is called when ADD DEPARTMENT is chosen
 function addDepartment() {
     prompt([{
         type: "input",
@@ -137,7 +141,7 @@ function addDepartment() {
     });
 }
 
-
+// function is called when ADD ROLE is chosen
 function addRole() {
     prompt([{
         type: "input",
@@ -169,10 +173,80 @@ function addRole() {
 
                     questions();
                 });
-           
+
         });
     });
 }
+
+// function is called when ADD EMPLOYEE is chosen
+function addEmployee() {
+    prompt([{
+            type: "input",
+            message: "What is the employee's first name?",
+            name: "firstName"
+        }, {
+            type: "input",
+            message: "What is the employee's last name?",
+            name: "lastName"
+        }, {
+            type: "list",
+            message: "What is the employee's role?",
+            choices: roles,
+            name: "role"
+        }, {
+            type: "list",
+            message: "Who is their manager?",
+            choices: [""],
+            name: "manager"
+        }
+
+    ]).then(answer => {
+        employeeFirstName = answer.firstName;
+        employeeLastName = answer.lastName;
+
+        db.query("INSERT INTO employee SET ?", {
+                employeeFirstName: employee.first_name,
+                employeeLastName: employee.last_name,
+                role_id: res[0].id
+            },
+            function (err) {
+                if (err) throw err;
+                console.log("the employee added");
+
+                // employeeRoleId = res[0].id;
+
+            })
+        questions();
+    });
+
+};
+
+// function is called when UPDATE EMPLOYEE is chosen
+function updateEmployee() {
+    let employeesList
+
+    db.query(`SELECT first_name, last_name FROM employee`, function (err, res) {
+        if (err) throw err;
+        console.log(res);
+        employeesList = res.map(employee => {
+            return `${employee.first_name} ${employee.last_name}`
+        })
+        console.log(employeesList);
+        prompt([{
+            type: "list",
+            message: "Who's role would you like to update?",
+            choices: employeesList,
+            name: "employees"
+        }, {
+            type: "list",
+            message: "What do you want to assign?",
+            choices: roles,
+            name: "role"
+        }]).then(response => {});
+    });
+
+
+};
 
 
 
