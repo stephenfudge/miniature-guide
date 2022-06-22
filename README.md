@@ -24,9 +24,9 @@ To run the application, after you have downloaded the files and completed the in
 
 Below is a screenshot of what the terminal should look like after the questions have appeared.  
 
-![alt text](assets//)
+![alt text](assets//startpage.png)
 
-There is also a [Video Link]()
+There is also a [Video Link](https://youtu.be/id7-Bpw2NgM)
 
 ## Credits
-I used w3schools for help with connecting the SQL queries into Javascript. I used https://www.npmjs.com/ for documentation on the packages so that I knew how to manipulate the data.  
+I used w3schools for help with connecting the SQL queries into Javascript and also for JOIN statements. I used https://www.npmjs.com/ for documentation on the packages so that I knew how to manipulate the data.  
